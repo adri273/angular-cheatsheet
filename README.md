@@ -4,6 +4,9 @@
 `npm install -g @angular/cli`
 `ng new my-app`
 
+Si falla al hacer el install, porque no puede resolver alguna dependencia como karma-jasmine-html-reporter, lo solucionamos de esta forma, dentro del proyecto
+`npm i --legacy-peer-deps --force`
+
 ## Serve app
 `ng serve`
 
