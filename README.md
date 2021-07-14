@@ -2,6 +2,7 @@
 
 ## Create app
 `npm install -g @angular/cli`
+`ng new my-app`
 
 ## Serve app
 `ng serve`
