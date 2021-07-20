@@ -142,6 +142,27 @@ import {MatIconModule} from '@angular/material/icon';
 })
 ```
 
+### Routing hacia páginas dentro de componente (crear enlaces)
+Para crear un enlace interno, se puede hacer de 2 maneras:
+```
+<ul>
+  <li [routerLink]="['/general'] [routerLinkActive]="['active']">General</li>  <!-- El routerLinkActive, cuando detecta que es la pagina activa, añade la clase active al elemento -->
+  <li (click)="goToLogin()">Login</a>
+</ul>
+```
+Con el onclick, tendremos que crear una función en el componente y quedará algo así (importarlo y pasarlo por el construct)
+```
+...
+import { Router } from '@angular/router';
+...
+export class ... {
+  constructir(private router: Router){}
+  goToLogin(){
+    this.router.navigate(['dashboard']);
+  }
+}
+```
+
 ## Separar componentes y pasarle valores
 En el products.component.html estabamos mostrando con el `*ngFor` los product. Pero esta estructura la vamos a poner en la vista del componente product.component.html y en listado solo renderizamos el componente app-product pasandole la variable del loop
 
@@ -214,13 +235,135 @@ addToCartClick(product:Product):void {
 }
 ```
 
+## Formularios
+Importamos los modulos necesarios
 
+La vista del componente queda algo así
+```
+<form #projectForm="ngForm" (ngSubmit)="onSubmit(projectForm)">
+  <p>
+    <label for="name">Nombre</label>
+    <input type="text" name="name" #name="ngModel" [(ngModel)]="project.name" (keyup.enter)="comprobarAlgo()" />
+    <span *ngIf="name.touched && !name.valid">
+      Campo obligatorio
+    </span>
+  </p>
+  <p>
+    <label for="description">Descripción</label>
+    <textarea name="description" #description="ngModel" [(ngModel)]="project.description" ></textarea>
+  </p>
+  <input type="submit" value="Enviar" [disabled]="!projectForm.form.valid" /> 
+</form>
+```
+Detallando un poco todo: 
+- `#projectForm="ngForm"` con el hashtag le definimos el nombre del formulario, y le decimos que es un formulario de angular
+- `(ngSubmit)="onSubmit(projectForm)"` cuando se lance el evento submit del form de angular, ejecutamos un método nuestro y le pasamos los datos del formulario por param
+- `#name="ngModel` le estamos diciendo que el nombre del input del formulario de angular es "name" y que pertenece a un ngModel
+- `[(ngModel)]="project.name"` con el two-way data-binding le estamos diciendo que cuando se modifique este dato, cambie el valor del objeto project.name
+- `*ngIf="name.touched && !name.valid"` si el input name ha sido tocado, y no tiene un valor válido, mostramos el span con el mensaje de error
+- `[disabled]="!projectForm.form.valid` si hay algún campo no válido en el formulario, el atributo disabled estará a true
+- `(keyup.enter)="comprobarAlgo()"` ejecuta la función comprobarAlgo() cuando se presiona la tecla "enter"
 
+## Comunicación entre componentes
+### De padre a hijo
+En el component del padre tenemos la variable widthSlider para pasarle al hijo
+```
+export class ... {
+  public widthSlider: number;
+  ...
+  (y le damos el valor a esa variable como nos convenga)
+}
+```
+Este es el html del padre, pasandole el parámetro "ancho" con el valor de la variable "widthSlider"
+```
+<app-slider [ancho]="widthSlider"></app-slider>
+```
+Y este es el componente hijo, que recibe el parametro "ancho"
+```
+export class ... {
+  @Input() ancho: number;
+  //Si queremos cambiar el nombre de la variable que viene
+  @Input('ancho') anchoSlider: number;
+}
+```
+Para utilizarlo en el component, se recoge con `this.ancho` y en el html se muestra con `{{ancho}}`
 
+## De hijo a padre
+Por ejemplo tenemos un formulario, y el submit pues ejecuta el método "enviar($event)", queremos enviar los datos (mocked), el código del component hijo queda algo así
+```
+import {EventEmitter} from '@angular/core';
+...
+export class... {
+  @Output() conseguirDatos = new EventEmitter();
+  
+  public datos: any;
+  constructor(){
+    this.datos = {
+      nombre: "Adri",
+      username: "adriav"
+    };
+  }
+  ...
+  enviar(event){
+    console.log(event);
+    this.conseguirDatos.emit(this.datos); //enviamos los datos al padre
+  }
+}
 
+```
+Y en el html del padre, añadimos el nuevo método `(conseguirDatos)="getCustomDatos($event)"`
+```
+<app-slider [ancho]="widthSlider" (conseguirDatos)="getCustomDatos($event)"></app-slider>
+```
+En el component padre, cremos el método getCustomDatos para mostrar la info del hijo
+```
+...
+public datos: any;
+...
+getCustomDatos(event){
+  console.log(event);
+  this.datos = event;
+}
+```
 
+## ViewChild
+Esto es el reemplazo a querySelector de js para obtener los elementos del dom. En el html ponemos en cualquier elemento `#sidebar` por ejemplo, con esto le ponemos una especia de ".sidebar" que entiende angular.
+Y para acceder al elemento, en el codigo del component ponemos algo así
+```
+...
+export class... {
+  @ViewChild('sidebar') sidebarDom;   //seleccionamos el elemento sidebar y lo ponemos en la variable sidebarDom (por ejemplo)
+  ...
+  ngOnInit(){
+    //en el onInit por ejemplo, ponemos el console log para ver el elemento
+    console.log(this.sidebar);
+    console.log(this.sidebar.nativeElement.textContent); //obtenemos el texto de ese div o lo que fuera (como un .value o .text())
+  }
+}
+```
+
+## Directivas personalizadas
+Vamos a aplicarle un estilo personalizado a un componente mediante una directiva.
+Creamos la directiva con `ng g d directives/resaltado` 
+Abrimos el resaltado.directive.js y añadimos ElementRef para obtener el elemento del dom que contiene esa directiva, y le aplicamos un border red
+```
+import {Directive, ElementRef} from '@angular/core';
+@Directive({
+  selector: '[appResaltado]'
+})
+export class ResaltadoDirective {
+  constructor(el: ElementRef){
+    console.log(el.nativeElement);
+    el.nativeElement.style.border = "1px solid red";
+  }
+}
+```
+Para aplicar esta directiva a un componente, lo hacemos añadiendo
+```
+<span resaltado>¡Resaltado!</span>
+```
 
 # Recursos
 Angular 12 Dominicode - https://www.youtube.com/watch?v=i-oYrcNtc2s
 Mock data JSON - https://www.youtube.com/redirect?event=video_description&redir_token=QUFFLUhqbXJNaUVVa0hLZ2hFc3kwOHM5Y3RPWjlpOHB2d3xBQ3Jtc0ttX2JnOGtBRjNvUzJ4Y1ZaY2xCampuZHRraTY0U1F3aW03cDVCZkJxcjFLSC1fMVNCWkhkN19BbGFURnBnYkZ2MjBpTy16ZkRob1ZOZ0dCZlZSLWp5am1WWlNDall1QTZQNFVJeDlaWUp4d2NpTnZ3MA&q=https%3A%2F%2Fgist.github.com%2Fbezael%2F4c2fefbad406f9004ae1afeef53560d8
-
+Angular Udemy Victor Robles - https://www.udemy.com/course/master-en-javascript-aprender-js-jquery-angular-nodejs-y-mas
