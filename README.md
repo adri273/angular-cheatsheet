@@ -7,6 +7,12 @@
 Si falla al hacer el install, porque no puede resolver alguna dependencia como karma-jasmine-html-reporter, lo solucionamos de esta forma, dentro del proyecto
 `npm i --legacy-peer-deps --force`
 
+### Creamos el repositorio en github
+Cuando tengamos la url del repo, abrimos en VSCode el directorio que hemos creado para el proyecto
+- Abrimos la terminal y dentro del directorio hacemos `git init`
+- Para vincularlo con el repo de github lo hacemos con `git remote add <remote name> <repository url>`, quedará algo así `remote add origin https://....`
+- subimos los cambios al repo y comprovamos que esté todo bien `git push -u origin -all`
+
 ## Serve app
 `ng serve`
 
